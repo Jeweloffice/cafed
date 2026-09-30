@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import PosView from './components/PosView';
 import AdminView from './components/AdminView';
+import AiCopilot from './components/AiCopilot';
+import BatchModal from './components/BatchModal';
 import { api } from './api';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Bot } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('pos'); // 'pos' or 'admin'
@@ -13,6 +15,10 @@ export default function App() {
   const [staffList, setStaffList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Global AI Copilot Modal State
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [showBatchModalFromAi, setShowBatchModalFromAi] = useState(false);
 
   const loadData = async () => {
     try {
@@ -42,13 +48,14 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-amber-500 selection:text-white">
-      {/* Top Navigation with dynamic branding */}
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-amber-500 selection:text-white relative">
+      {/* Top Navigation with dynamic branding & AI Copilot launcher */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         activeBatch={activeBatch}
         settings={settings}
+        onOpenAiCopilot={() => setShowAiModal(true)}
       />
 
       {/* Main View Area */}
@@ -87,9 +94,49 @@ export default function App() {
         )}
       </main>
 
+      {/* Floating AI Copilot Trigger Button (Bottom Right) */}
+      <div className="fixed bottom-6 right-6 z-40 print:hidden">
+        <button
+          onClick={() => setShowAiModal(true)}
+          className="group flex items-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xl shadow-indigo-600/30 transition-all transform hover:scale-105 active:scale-95"
+        >
+          <Bot className="w-5 h-5 text-amber-300 animate-bounce" />
+          <span>Ask AI Copilot</span>
+        </button>
+      </div>
+
+      {/* Global AI Copilot Modal Overlay */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 print:hidden animate-in fade-in duration-150">
+          <div className="max-w-2xl w-full">
+            <AiCopilot
+              settings={settings}
+              onClose={() => setShowAiModal(false)}
+              onOpenBatchModal={() => {
+                setShowAiModal(false);
+                setShowBatchModalFromAi(true);
+              }}
+              onSwitchTab={(subtab) => {
+                setShowAiModal(false);
+                setActiveTab('admin');
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Batch Modal triggered from AI recipe scaler */}
+      {showBatchModalFromAi && (
+        <BatchModal
+          settings={settings}
+          onClose={() => setShowBatchModalFromAi(false)}
+          onBatchCreated={loadData}
+        />
+      )}
+
       {/* Footer */}
       <footer className="py-3 px-4 border-t border-slate-200 bg-white text-center text-[11px] text-slate-400 print:hidden">
-        <span>🍗 {settings?.shop_name || 'Biryani POS'} • Restaurant POS & Cost Control System • Made with React & Python</span>
+        <span>🍗 {settings?.shop_name || 'Biryani POS'} • Restaurant POS & AI Cost Intelligence System • Made with React & Python</span>
       </footer>
     </div>
   );

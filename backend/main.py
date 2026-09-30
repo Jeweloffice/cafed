@@ -1,6 +1,6 @@
 from typing import List, Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, Query, status
+from fastapi import FastAPI, Depends, HTTPException, Query, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from database import engine, Base, get_db
 import models
 import schemas
 import crud
+import rag_service
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
@@ -25,9 +26,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Biryani Shop POS & Financial Management API",
-    description="Business-tailored customizable system for Biryani outlets tracking sales, batch costs, gas/rice inventory, and live profit-loss.",
-    version="1.1.0",
+    title="Biryani Shop POS & Financial Management API with AI RAG",
+    description="Business-tailored customizable system with AI RAG Copilot for Biryani outlets tracking sales, batch costs, gas/rice inventory, and live profit-loss.",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
@@ -43,7 +44,63 @@ app.add_middleware(
 
 @app.get("/api/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "app": "Biryani POS API", "version": "1.1.0"}
+    return {"status": "ok", "app": "Biryani POS API with AI RAG", "version": "1.2.0"}
+
+
+# --- AI RAG COPILOT ENDPOINTS ---
+@app.post("/api/ai/chat", tags=["AI Copilot"])
+def ai_chat_copilot(payload: dict = Body(...), db: Session = Depends(get_db)):
+    """Universal AI Copilot solving P&L Q&A, Invoice Analysis, Recipe Scaling, and Prep Advisory."""
+    query = payload.get("query", "").strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+    return rag_service.process_rag_copilot_query(db, query)
+
+
+@app.post("/api/ai/invoice-scan", tags=["AI Copilot"])
+def ai_scan_invoice(payload: dict = Body(...), db: Session = Depends(get_db)):
+    """Problem 2: Vendor Invoice Scanner & Price Anomaly Detector."""
+    text = payload.get("invoice_text", "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Invoice text is required")
+    return rag_service.analyze_vendor_invoice(db, text)
+
+
+@app.post("/api/ai/recipe-scale", tags=["AI Copilot"])
+def ai_scale_recipe(payload: dict = Body(...), db: Session = Depends(get_db)):
+    """Problem 3: Master Chef Recipe Scaler & Kitchen SOP Guide."""
+    biryani_type = payload.get("biryani_type", "Chicken Dum Biryani")
+    target_plates = int(payload.get("target_plates", 45))
+    return rag_service.scale_recipe_sop(db, biryani_type, target_plates)
+
+
+@app.post("/api/ai/prep-briefing", tags=["AI Copilot"])
+def ai_prep_briefing(payload: dict = Body(default={}), db: Session = Depends(get_db)):
+    """Problem 4: Predictive Morning Prep & Wastage Minimizer."""
+    day = payload.get("day")
+    return rag_service.get_predictive_prep_advice(db, day)
+
+
+@app.post("/api/ai/auto-log-invoice", tags=["AI Copilot"])
+def ai_auto_log_invoice(payload: dict = Body(...), db: Session = Depends(get_db)):
+    """Auto-logs items from an analyzed invoice directly into shop expenses."""
+    items = payload.get("items", [])
+    if not items:
+        raise HTTPException(status_code=400, detail="No items to log")
+
+    logged = []
+    for it in items:
+        cat = "Gas Refill" if "gas" in it["item_name"].lower() else "Groceries & Spices"
+        exp = crud.create_expense(db, schemas.ExpenseCreate(
+            title=f"{it['item_name']} ({it['quantity']} {it['unit']})",
+            category=cat,
+            amount=float(it["line_total"]),
+            payment_method=payload.get("payment_method", "Cash"),
+            notes="Auto-logged via AI Invoice Scanner"
+        ))
+        logged.append(exp.id)
+
+    return {"message": f"Successfully logged {len(logged)} items into shop expenses", "expense_ids": logged}
 
 
 # --- SHOP SETTINGS & PROFILE ---

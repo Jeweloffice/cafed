@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Utensils, ShieldCheck, ShoppingCart, Lock, KeyRound, Flame } from 'lucide-react';
+import { Utensils, ShieldCheck, ShoppingCart, Lock, KeyRound, Flame, Bot, Sparkles } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, activeBatch, settings }) {
+export default function Navbar({ activeTab, setActiveTab, activeBatch, settings, onOpenAiCopilot }) {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
@@ -48,7 +48,7 @@ export default function Navbar({ activeTab, setActiveTab, activeBatch, settings 
                 <h1 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-none">
                   {shopName}
                 </h1>
-                <p className="text-[11px] text-slate-500 font-medium truncate max-w-[200px] sm:max-w-sm mt-0.5">
+                <p className="text-[11px] text-slate-500 font-medium truncate max-w-[160px] sm:max-w-sm mt-0.5">
                   {tagline}
                 </p>
               </div>
@@ -56,7 +56,7 @@ export default function Navbar({ activeTab, setActiveTab, activeBatch, settings 
 
             {/* Active Deg / Handi Status Indicator */}
             {activeBatch && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs">
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs">
                 <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
                 <span className="font-semibold">{activeBatch.batch_name}:</span>
                 <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-amber-300 text-amber-900 font-bold">
@@ -66,32 +66,48 @@ export default function Navbar({ activeTab, setActiveTab, activeBatch, settings 
               </div>
             )}
 
-            {/* Role Switcher Tabs */}
-            <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-xl">
-              <button
-                onClick={() => handleTabClick('pos')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'pos'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShoppingCart className="w-4 h-4 text-amber-600" />
-                <span>Staff POS</span>
-              </button>
+            {/* Navigation Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* AI Copilot Quick Launcher Button */}
+              {onOpenAiCopilot && (
+                <button
+                  onClick={onOpenAiCopilot}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xs transition-all animate-pulse"
+                >
+                  <Bot className="w-4 h-4 text-amber-300" />
+                  <span className="hidden sm:inline">AI Copilot</span>
+                </button>
+              )}
 
-              <button
-                onClick={() => handleTabClick('admin')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'admin'
-                    ? 'bg-amber-600 text-white shadow-xs shadow-amber-600/30'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Manager Hub</span>
-                {!isManagerUnlocked && <Lock className="w-3 h-3 text-slate-400" />}
-              </button>
+              {/* Role Switcher Tabs */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                <button
+                  onClick={() => handleTabClick('pos')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                    activeTab === 'pos'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ShoppingCart className="w-4 h-4 text-amber-600" />
+                  <span className="hidden sm:inline">Staff POS</span>
+                  <span className="sm:hidden">POS</span>
+                </button>
+
+                <button
+                  onClick={() => handleTabClick('admin')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                    activeTab === 'admin'
+                      ? 'bg-amber-600 text-white shadow-xs shadow-amber-600/30'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Manager Hub</span>
+                  <span className="sm:hidden">Manager</span>
+                  {!isManagerUnlocked && <Lock className="w-3 h-3 text-slate-400" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>

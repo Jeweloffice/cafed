@@ -4,13 +4,14 @@ import {
   Receipt, Plus, RefreshCw, Calendar, PieChart, Layers, 
   Clock, CheckCircle, Trash2, Edit2, AlertTriangle, ShieldCheck,
   Settings, Users, UserPlus, Store, KeyRound, AlertOctagon,
-  Sparkles, Save
+  Sparkles, Save, Bot
 } from 'lucide-react';
 import { api } from '../api';
 import BatchModal from './BatchModal';
 import ExpenseModal from './ExpenseModal';
 import MenuItemModal from './MenuItemModal';
 import StaffModal from './StaffModal';
+import AiCopilot from './AiCopilot';
 
 export default function AdminView({ menuItems, settings, onDataChanged }) {
   const currencySymbol = settings?.currency_symbol || '₹';
@@ -201,12 +202,20 @@ export default function AdminView({ menuItems, settings, onDataChanged }) {
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time sales, batch ingredient costs, cooking gas usage, staff, and shop customization.
+            Real-time sales, batch ingredient costs, cooking gas usage, staff, and AI Copilot.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setActiveSubTab('ai')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all"
+          >
+            <Bot className="w-4 h-4 text-amber-300" />
+            <span>Ask AI Copilot</span>
+          </button>
+
           <button
             onClick={() => setShowBatchModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all"
@@ -237,6 +246,7 @@ export default function AdminView({ menuItems, settings, onDataChanged }) {
       <div className="flex border-b border-slate-200 space-x-2 sm:space-x-4 overflow-x-auto scrollbar-none">
         {[
           { id: 'pnl', label: '📊 Financial P&L & Margins' },
+          { id: 'ai', label: '🤖 AI Copilot (RAG)' },
           { id: 'batches', label: '🍲 Deg & Batch Cooking' },
           { id: 'expenses', label: '💸 Expense Tracker' },
           { id: 'menu', label: '🍛 Menu & Pricing' },
@@ -444,6 +454,17 @@ export default function AdminView({ menuItems, settings, onDataChanged }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SUB-TAB: AI COPILOT (RAG) */}
+      {activeSubTab === 'ai' && (
+        <div className="space-y-4 max-w-4xl mx-auto">
+          <AiCopilot
+            settings={settings}
+            onOpenBatchModal={() => setShowBatchModal(true)}
+            onSwitchTab={(t) => setActiveSubTab(t)}
+          />
         </div>
       )}
 
