@@ -1,7 +1,10 @@
+import os
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Query, status, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from database import engine, Base, get_db
@@ -318,3 +321,23 @@ def get_plate_breakdown(db: Session = Depends(get_db)):
         "total_plates_produced": total_plates_accum,
         "ingredients": categories
     }
+
+
+# --- SERVE PRODUCTION FRONTEND BUILD & PWA ---
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_frontend_spa(full_path: str):
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        target = os.path.join(frontend_dist, full_path)
+        if os.path.exists(target) and os.path.isfile(target):
+            return FileResponse(target)
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Frontend build index not found")
